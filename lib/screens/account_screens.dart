@@ -69,10 +69,14 @@ class AccountScreen {
     }
   }
   _getAllAccounts() async {
+    try { // Tenta executar o código
     List<Account> listAccounts = await _accountServices.getAll();
     print("Aqui estão todas as contas:");
       print(listAccounts);
-
+    } on Exception{// Captura qualquer exceção lançada
+      print("Erro ao buscar as contas.");
+    }
   }
 
 }
+
