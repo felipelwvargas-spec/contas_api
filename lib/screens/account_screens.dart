@@ -2,14 +2,17 @@ import 'package:amigo_secreto/models/account.dart';
 import 'package:amigo_secreto/services/account_services.dart';
 import 'dart:io';
 
+import 'package:http/http.dart';
+
 class AccountScreen {
   AccountServices _accountServices = AccountServices();
 
-  void initializeStream(){
+  void initializeStream() {
     _accountServices.streamInfos.listen((event) {
       print(event);
     });
   }
+
   void runChatBot() async {
     print("Bom dia, me chamo Amigo Secreto Bot! 🤖");
     print("Que bom te ter aqui com a gente.\n");
@@ -23,10 +26,10 @@ class AccountScreen {
       print("0 - Sair");
 
       String? input = stdin.readLineSync();
-      if (input != null){
+      if (input != null) {
         switch (input) {
           case "1":
-            await _getAllAccounts();             
+            await _getAllAccounts();
             break;
           case "2":
             print("Digite o id da pessoa:");
@@ -38,7 +41,7 @@ class AccountScreen {
             print("Digite o saldo inicial:");
             String? balanceInput = stdin.readLineSync();
             double balance = 0.0;
-            if (balanceInput != null){
+            if (balanceInput != null) {
               balance = double.tryParse(balanceInput) ?? 0.0;
             }
             Account newAccount = Account(
@@ -47,14 +50,16 @@ class AccountScreen {
               lastName: lastName ?? '',
               balance: balance,
             );
-             await _accountServices.addAccount(newAccount);
+            await _accountServices.addAccount(newAccount);
             break;
-            case "3": 
+          case "3":
             print("Deletar uma conta.");
             print("Digite o id da conta a ser deletada:");
             String? deleteId = stdin.readLineSync();
-            await _accountServices.deleteAccount(deleteId ?? ''); // Deleta a conta com o id fornecido           
-            break;            
+            await _accountServices.deleteAccount(
+              deleteId ?? '',
+            ); // Deleta a conta com o id fornecido
+            break;
           case "0":
             running = false;
             print("Até mais!");
@@ -63,20 +68,26 @@ class AccountScreen {
             print("Opção inválida. Tente novamente.");
         }
       }
-
-      
-    
     }
   }
+
   _getAllAccounts() async {
-    try { // Tenta executar o código
-    List<Account> listAccounts = await _accountServices.getAll();
-    print("Aqui estão todas as contas:");
+    try {
+      // Tenta executar o código
+      List<Account> listAccounts = await _accountServices.getAll();
+      print("Aqui estão todas as contas:");
       print(listAccounts);
-    } on Exception{// Captura qualquer exceção lançada
+    } on ClientException catch (clientException) {
+      // Captura exceções específicas de ClientException
+      print("Erro de conexão ao servidor.");
+      print(clientException.message); //print da mensagem de erro
+      print(clientException.uri); // print do URI acessado
+    } on Exception {
+      // Captura qualquer exceção lançada
       print("Erro ao buscar as contas.");
+    } finally {
+      // Código que sempre será executado
+      print("${DateTime.now()} | Operação de busca de contas finalizada.");
     }
   }
-
 }
-
