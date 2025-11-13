@@ -40,15 +40,19 @@ class AccountScreen {
             String? lastName = stdin.readLineSync();
             print("Digite o saldo inicial:");
             String? balanceInput = stdin.readLineSync();
-            double balance = 0.0;
+            double balance = 0.0;           
             if (balanceInput != null) {
               balance = double.tryParse(balanceInput) ?? 0.0;
             }
+             print("Digite o tipo da conta:");
+            String? accountType = stdin.readLineSync();
+
             Account newAccount = Account(
               id: id ?? '',
               name: name ?? '',
               lastName: lastName ?? '',
               balance: balance,
+              accountType: accountType ?? '',
             );
             await _accountServices.addAccount(newAccount);
             break;

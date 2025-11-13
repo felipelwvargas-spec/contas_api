@@ -5,21 +5,24 @@ class Account {
   final String name;
   final String lastName;
   final double balance;
+  final String accountType;
 
   Account({
     required this.id,
     required this.name,
     required this.lastName,
     required this.balance,
+    required this.accountType,
   });
 
   /// 🏭 Factory constructor — cria um Account a partir de um Map (ex: de um banco ou API)
   factory Account.fromMap(Map<String, dynamic> map) {
     return Account(
-      id: map['id'] ?? '',
-      name: map['name'] ?? '',
-      lastName: map['lastName'] ?? '',
-      balance: (map['balance'] ?? 0).toDouble(),
+      id: map['id'] as String,
+      name: map['name'] as String,
+      lastName: map['lastName'] as String,
+      balance: map['balance'] as double,
+      accountType: map['accountType'] as String,
     );
   }
 
@@ -30,6 +33,7 @@ class Account {
       'name': name,
       'lastName': lastName,
       'balance': balance,
+      'accountType': accountType,
     };
   }
 
@@ -39,12 +43,14 @@ class Account {
     String? name,
     String? lastName,
     double? balance,
+    String? accountType,
   }) {
     return Account(
       id: id ?? this.id,
       name: name ?? this.name,
       lastName: lastName ?? this.lastName,
       balance: balance ?? this.balance,
+      accountType: accountType ?? this.accountType,
     );
   }
 
@@ -58,7 +64,7 @@ class Account {
   /// 🧠 Facilita debug e logs
   @override
   String toString() {
-    return 'Account(id: $id, name: $name, lastName: $lastName, balance: $balance)';
+    return 'Account(id: $id, name: $name, lastName: $lastName, balance: $balance, accountType: $accountType)';
   }
 
   /// ⚖️ Garante que duas contas com os mesmos dados sejam consideradas iguais
@@ -70,7 +76,8 @@ class Account {
         other.id == id &&
         other.name == name &&
         other.lastName == lastName &&
-        other.balance == balance;
+        other.balance == balance &&
+        other.accountType == accountType;
   }
 
   /// 🔢 Necessário quando sobrescrevemos `==`
@@ -79,6 +86,8 @@ class Account {
     return id.hashCode ^
         name.hashCode ^
         lastName.hashCode ^
-        balance.hashCode;
+        balance.hashCode ^
+        accountType.hashCode;
+
   }
 }

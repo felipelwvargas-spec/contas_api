@@ -1,0 +1,39 @@
+class Transaction {
+    String id;
+    String senderAccountId;
+    String receiverAccountId;
+    DateTime date;
+    double amount;
+    double taxes;
+
+    Transaction({
+        required this.id,
+        required this.senderAccountId,
+        required this.receiverAccountId,
+        required this.date,
+        required this.amount,
+        required this.taxes,
+    });
+
+    factory Transaction.fromMap(Map<String, dynamic> map) {
+        return Transaction(
+            id: map['id'],
+            senderAccountId: map['senderAccountId'],
+            receiverAccountId: map['receiverAccountId'],
+            date: DateTime.parse(map['date']),
+            amount: map['amount'],
+            taxes: map['taxes'],
+        );
+    }
+
+    Map<String, dynamic> toMap() {
+        return {
+            'id': id,
+            'senderAccountId': senderAccountId,
+            'receiverAccountId': receiverAccountId,
+            'date': date.toIso8601String(),
+            'amount': amount,
+            'taxes': taxes,
+        };
+    }
+}
