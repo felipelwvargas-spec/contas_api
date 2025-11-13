@@ -4,7 +4,7 @@ import 'package:amigo_secreto/services/account_services.dart';
 
 class TransactionService{
   AccountServices _accountServices = AccountServices();
-    makeTrasaction({required String idSender, required String idReceiver, required double amount}) async {
+    dynamic makeTrasaction({required String idSender, required String idReceiver, required double amount}) async {
     List<Account> listAccounts = await _accountServices.getAll();
     Account senderAccount = listAccounts.firstWhere((acc) => acc.id == idSender,) ;
     Account receiverAccount = listAccounts.firstWhere((acc) => acc.id == idReceiver,);

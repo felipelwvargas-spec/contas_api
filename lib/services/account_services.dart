@@ -6,130 +6,104 @@ import 'dart:convert'; // Para converter JSON em Map/List e vice-versa
 import 'package:amigo_secreto/api_key.dart'; // Onde está armazenada a chave de autenticação do GitHub (githubApiKey)
 
 class AccountServices {
-  // Cria um controlador de stream que vai emitir mensagens (Strings)
-  StreamController<String> _streamController = StreamController<String>();
+  // 🔹 Controlador de Stream (para logs e eventos)
+  final StreamController<String> _streamController = StreamController<String>();
   Stream<String> get streamInfos => _streamController.stream;
-  // URL do Gist a ser atualizado
-  String url = "https://api.github.com/gists/b49d630bd597c03ed8b9b90d498e7f5a";
 
+  // 🔹 URL base do Gist
+  final String url = "https://api.github.com/gists/b49d630bd597c03ed8b9b90d498e7f5a";
+
+  // ============================================================
+  // MÉTODO: Buscar todas as contas
+  // ============================================================
   Future<List<Account>> getAll() async {
     // Faz a requisição GET aguardando o resultado
     Response response = await get(Uri.parse(url));
+
     _streamController.add(
       "${DateTime.now()} - Dados requisitados (status: ${response.statusCode})",
     );
-    Map<String, dynamic> mapResponse = json.decode(
-      response.body,
-    ); // Decodifica o JSON da resposta
-    List<dynamic> listDynamic = json.decode(
-      mapResponse['files']['accounts.json']['content'],
-    );
-    // Decodifica o conteúdo do arquivo accounts.json (lista de contas)
-    List<Account> listAccounts = [];
 
-    for (dynamic dyn in listDynamic) {
-      // Itera sobre cada item da lista dinâmica
-      Map<String, dynamic> mapAccount =
-          dyn as Map<String, dynamic>; // Converte o item dinâmico em Map
-      Account account = Account.fromMap(
-        mapAccount,
-      ); // Cria a conta a partir do Map
-      listAccounts.add(account); // Adiciona a conta à lista
-    }
+    // Decodifica o JSON principal retornado pela API
+    Map<String, dynamic> mapResponse = json.decode(response.body);
 
-    // Retorna a lista decodificada do JSON (contas)
+    // Extrai o conteúdo do arquivo "accounts.json" (lista de contas)
+    List<dynamic> listDynamic =
+        json.decode(mapResponse['files']['accounts.json']['content']);
+
+    // Converte os Maps para objetos Account
+    List<Account> listAccounts =
+        listDynamic.map((item) => Account.fromMap(item)).toList();
+
     return listAccounts;
   }
 
-  dynamic addAccount(Account account) async {
-    // Busca os dados existentes no Gist (lista de contas)
-    List<Account> listAccounts = await getAll();
+  // ============================================================
+  // MÉTODO: Salvar lista de contas atualizada na API
+  // ============================================================
+  Future<bool> _saveAccountsToApi(List<Account> listAccounts) async {
+    // Converte cada conta em Map e depois para JSON
+    List<Map<String, dynamic>> listContent =
+        listAccounts.map((acc) => acc.toMap()).toList();
 
-    // Adiciona a nova conta à lista
-    listAccounts.add(account);
+    String content = json.encode(listContent);
 
-    List<Map<String, dynamic>> listContent = [];
-    for (Account account in listAccounts) {
-      listContent.add(account.toMap());
-    } // Converte cada conta em Map e adiciona à nova lista
-
-    String content = json.encode(
-      listContent,
-    ); // Converte a lista de Maps em JSON (String)
-
-    // Envia os novos dados via POST (GitHub API)
+    // Faz o POST para atualizar o Gist
     Response response = await post(
       Uri.parse(url),
       headers: {
-        // Usa o token pessoal para autenticação no GitHub
         "Authorization": "Bearer $githubApiKey",
       },
       body: json.encode({
-        // Define a estrutura exigida pela API do GitHub
         "description": "Accounts.json",
         "public": true,
         "files": {
           "accounts.json": {
-            "content": content, // Aqui vai o novo conteúdo do arquivo JSON
+            "content": content,
           },
         },
       }),
     );
 
-    // Se o status code começar com "2" (ex: 200, 201), significa sucesso
-    if (response.statusCode.toString()[0] == "2") {
-      _streamController.add(
-        "${DateTime.now()} - Dados inseridos (${account.name})",
-      );
-    } else {
-      _streamController.add(
-        "${DateTime.now()} - Erro ao inserir dados (status: ${response.statusCode} ${account.name})",
-      );
-    }
+    // Retorna true se o status começar com "2" (ex: 200, 201)
+    bool success = response.statusCode.toString().startsWith("2");
+
+    _streamController.add(
+      "${DateTime.now()} - Atualização na API: ${success ? 'sucesso' : 'erro'} (status: ${response.statusCode})",
+    );
+
+    return success;
   }
 
-  dynamic deleteAccount(String id) async {
-    // Busca os dados existentes no Gist (lista de contas)
+  // ============================================================
+  // MÉTODO: Adicionar nova conta
+  // ============================================================
+  Future<void> addAccount(Account account) async {
     List<Account> listAccounts = await getAll();
+    listAccounts.add(account);
 
-    // Remove a conta com o ID especificado
+    bool success = await _saveAccountsToApi(listAccounts);
+
+    _streamController.add(
+      success
+          ? "${DateTime.now()} - Dados inseridos (${account.name})"
+          : "${DateTime.now()} - Erro ao inserir dados (${account.name})",
+    );
+  }
+
+  // ============================================================
+  // MÉTODO: Deletar conta
+  // ============================================================
+  Future<void> deleteAccount(String id) async {
+    List<Account> listAccounts = await getAll();
     listAccounts.removeWhere((account) => account.id == id);
 
-    List<Map<String, dynamic>> listContent = [];
-    for (Account account in listAccounts) {
-      listContent.add(account.toMap());
-    } // Converte cada conta em Map e adiciona à nova lista
+    bool success = await _saveAccountsToApi(listAccounts);
 
-    String content = json.encode(
-      listContent,
-    ); // Converte a lista de Maps em JSON (String)
-
-    // Envia os novos dados via POST (GitHub API)
-    Response response = await post(
-      Uri.parse(url),
-      headers: {
-        // Usa o token pessoal para autenticação no GitHub
-        "Authorization": "Bearer $githubApiKey",
-      },
-      body: json.encode({
-        // Define a estrutura exigida pela API do GitHub
-        "description": "Accounts.json",
-        "public": true,
-        "files": {
-          "accounts.json": {
-            "content": content, // Aqui vai o novo conteúdo do arquivo JSON
-          },
-        },
-      }),
+    _streamController.add(
+      success
+          ? "${DateTime.now()} - Dados deletados (ID: $id)"
+          : "${DateTime.now()} - Erro ao deletar dados (ID: $id)",
     );
-
-    // Se o status code começar com "2" (ex: 200, 201), significa sucesso
-    if (response.statusCode.toString()[0] == "2") {
-      _streamController.add("${DateTime.now()} - Dados deletados (ID: $id)");
-    } else {
-      _streamController.add(
-        "${DateTime.now()} - Erro ao deletar dados (status: ${response.statusCode} ID: $id)",
-      );
-    }
   }
 }
