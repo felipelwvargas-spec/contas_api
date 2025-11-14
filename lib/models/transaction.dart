@@ -1,12 +1,26 @@
+// Modelo que representa uma transação entre duas contas.
+// Contém informações essenciais como: IDs das contas, data, valor e impostos.
 import 'dart:convert';
 
 class Transaction {
+  /// Identificador único da transação (string para facilitar serialização)
   String id;
+
+  /// ID da conta remetente
   String senderAccountId;
+
+  /// ID da conta destinatária
   String receiverAccountId;
+
+  /// Data/hora da transação
   DateTime date;
+
+  /// Valor transferido
   double amount;
+
+  /// Impostos cobrados nesta transação
   double taxes;
+
   Transaction({
     required this.id,
     required this.senderAccountId,
@@ -16,6 +30,7 @@ class Transaction {
     required this.taxes,
   });
 
+  /// Cria uma cópia do objeto permitindo sobrescrever campos desejados.
   Transaction copyWith({
     String? id,
     String? senderAccountId,
@@ -34,17 +49,20 @@ class Transaction {
     );
   }
 
+  /// Converte a instância para um Map para serialização.
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'id': id,
       'senderAccountId': senderAccountId,
       'receiverAccountId': receiverAccountId,
+      // Armazenamos a data como millisecondsSinceEpoch para interoperabilidade
       'date': date.millisecondsSinceEpoch,
       'amount': amount,
       'taxes': taxes,
     };
   }
 
+  /// Cria uma instância a partir de um Map (geralmente vindo de um JSON).
   factory Transaction.fromMap(Map<String, dynamic> map) {
     return Transaction(
       id: map['id'] as String,
@@ -56,8 +74,10 @@ class Transaction {
     );
   }
 
+  /// Serializa para JSON (String)
   String toJson() => json.encode(toMap());
 
+  /// Cria a instância a partir de uma string JSON
   factory Transaction.fromJson(String source) =>
       Transaction.fromMap(json.decode(source) as Map<String, dynamic>);
 
